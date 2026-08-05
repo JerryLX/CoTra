@@ -45,6 +45,7 @@ if (NOT Boost_FOUND)
 endif()
 
 include_directories(${Boost_INCLUDE_DIR})
+link_libraries(MKL::MKL)
 
 # Section for tcmalloc. The DiskANN tools are always linked to tcmalloc. For Windows, they also need to
 # force-include the _tcmalloc symbol for enabling tcmalloc.

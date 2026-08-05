@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "common_includes.h"
+#include <mkl.h>
 
 #if defined(DISKANN_RELEASE_UNUSED_TCMALLOC_MEMORY_AT_CHECKPOINTS) && defined(DISKANN_BUILD)
 #include "gperftools/malloc_extension.h"
@@ -1253,6 +1254,7 @@ int build_disk_index(const char *dataFilePath, const char *indexFilePath, const 
     if (num_threads != 0)
     {
         omp_set_num_threads(num_threads);
+        mkl_set_num_threads(num_threads);
     }
 
     diskann::cout << "Starting index build: R=" << R << " L=" << L << " Query RAM budget: " << final_index_ram_limit

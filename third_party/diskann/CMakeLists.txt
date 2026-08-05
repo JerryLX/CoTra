@@ -140,12 +140,8 @@ if (MSVC)
         "${DISKANN_MKL_LIB_PATH}/mkl_core.lib"
         "${DISKANN_MKL_LIB_PATH}/mkl_intel_thread.lib")
 else()
-    find_package(BLAS REQUIRED)
-    find_package(LAPACK REQUIRED)
-    find_path(LAPACKE_INCLUDE_DIR lapacke.h REQUIRED)
-    find_library(LAPACKE_LIBRARY NAMES lapacke REQUIRED)
-    include_directories(${LAPACKE_INCLUDE_DIR})
-    link_libraries(${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${LAPACKE_LIBRARY} pthread m dl)
+    find_package(MKL CONFIG REQUIRED)
+    link_libraries(MKL::MKL pthread m dl)
 endif()
 
 # Section for tcmalloc. The DiskANN tools are always linked to tcmalloc. For Windows, they also need to

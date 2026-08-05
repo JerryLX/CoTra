@@ -31,22 +31,22 @@ sudo apt update
 sudo apt install \
   libaio-dev libboost-filesystem-dev libboost-iostreams-dev \
   libboost-program-options-dev libboost-serialization-dev libboost-system-dev \
-  libgoogle-perftools-dev libibverbs-dev liblapacke-dev libmemcached-dev \
-  libnuma-dev libopenblas-dev librdmacm-dev memcached
+  libgoogle-perftools-dev libibverbs-dev libmemcached-dev \
+  libnuma-dev librdmacm-dev memcached
 ```
 
 The build uses the compiler and libraries discovered by CMake. It does not
-require paths from the original development machine or Intel oneAPI. OpenBLAS
-and LAPACKE work on both x86-64 and ARM64.
+require paths from the original development machine. Install Intel oneAPI MKL,
+then load its build environment before configuring CoTra:
 
 ```bash
+source /opt/intel/oneapi/setvars.sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-GCC uses `libgomp` for OpenMP automatically. To avoid nested OpenMP and
-OpenBLAS thread pools at runtime, use `OPENBLAS_NUM_THREADS=1` and control the
-application parallelism with `OMP_NUM_THREADS`.
+Alternatively, pass the package directory explicitly without embedding it in
+the project: `-DMKL_DIR=/path/to/mkl/latest/lib/cmake/mkl`.
 
 2. **Build the Project**:
 ```bash

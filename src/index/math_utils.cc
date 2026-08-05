@@ -4,9 +4,7 @@
 #include "index/math_utils.h"
 
 #include <malloc.h>
-#include <cblas.h>
-
-using MKL_INT = int;
+#include <mkl.h>
 
 #include <algorithm>
 #include <limits>

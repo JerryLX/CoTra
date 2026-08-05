@@ -23,10 +23,7 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 
 find_package(Threads REQUIRED)
 find_package(OpenMP REQUIRED)
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
-find_path(LAPACKE_INCLUDE_DIR lapacke.h REQUIRED)
-find_library(LAPACKE_LIBRARY NAMES lapacke REQUIRED)
+find_package(MKL CONFIG REQUIRED)
 find_package(Boost 1.58.0 REQUIRED COMPONENTS serialization iostreams)
 find_library(MEMCACHED_LIB memcached REQUIRED)
 find_library(IBVERBS_LIB ibverbs REQUIRED)
@@ -62,8 +59,7 @@ target_include_directories(rdma_anns PUBLIC
 
 find_package(Boost COMPONENTS program_options system filesystem)
 
-include_directories(${LAPACKE_INCLUDE_DIR})
-link_libraries(${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${LAPACKE_LIBRARY} m dl ${Boost_LIBRARIES})
+link_libraries(MKL::MKL m dl ${Boost_LIBRARIES})
 
 add_library(rdma_index)
 file(GLOB index_sources 
@@ -76,4 +72,3 @@ target_include_directories(rdma_index PUBLIC
 )
 
 add_subdirectory(tests)
-
