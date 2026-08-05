@@ -28,18 +28,18 @@ We use **memcached** to manage meta data of servers.
 We use **[DiskANN](https://github.com/microsoft/DiskANN)** as default graph index.
 ```bash
 sudo apt update
-sudo apt install libibverbs-dev librdmacm-dev
-sudo apt install memcached libmemcached-tools
+sudo apt install \
+  libaio-dev libboost-filesystem-dev libboost-iostreams-dev \
+  libboost-program-options-dev libboost-serialization-dev libboost-system-dev \
+  libgoogle-perftools-dev libibverbs-dev liblapacke-dev libmemcached-dev \
+  libnuma-dev libopenblas-dev librdmacm-dev memcached
 ```
-The original x86 build uses the Intel oneAPI dependencies required by DiskANN.
 
-### ARM64 build
-
-The `arm64-openblas` branch does not require Intel oneAPI, MKL, or Intel
-OpenMP. On Ubuntu/Debian ARM64, install the portable BLAS/LAPACK dependencies:
+The build uses the compiler and libraries discovered by CMake. It does not
+require paths from the original development machine or Intel oneAPI. OpenBLAS
+and LAPACKE work on both x86-64 and ARM64.
 
 ```bash
-sudo apt install libopenblas-dev liblapacke-dev libomp-dev
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```

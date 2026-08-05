@@ -34,9 +34,6 @@ if (DISKANN_RELEASE_UNUSED_TCMALLOC_MEMORY_AT_CHECKPOINTS)
 include_directories(${PROJECT_SOURCE_DIR}/gperftools/src)
 endif()
 
-include_directories(/usr/local/include)
-include_directories(./3rdparty/faiss)
-    
 # DiskANN core uses header-only libraries. Only DiskANN tools need program_options which has a linker library,
 # but its size is small. Reduce number of dependent DLLs by linking statically.
 if(NOT MSVC)
@@ -87,4 +84,3 @@ include(diskann/clang-format.cmake)
 if(PYBIND)
     add_subdirectory(diskann/python)
 endif()
-
