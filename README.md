@@ -31,7 +31,22 @@ sudo apt update
 sudo apt install libibverbs-dev librdmacm-dev
 sudo apt install memcached libmemcached-tools
 ```
-Please install dependencies of DiskANN: intel-oneapi
+The original x86 build uses the Intel oneAPI dependencies required by DiskANN.
+
+### ARM64 build
+
+The `arm64-openblas` branch does not require Intel oneAPI, MKL, or Intel
+OpenMP. On Ubuntu/Debian ARM64, install the portable BLAS/LAPACK dependencies:
+
+```bash
+sudo apt install libopenblas-dev liblapacke-dev libomp-dev
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+```
+
+GCC uses `libgomp` for OpenMP automatically. To avoid nested OpenMP and
+OpenBLAS thread pools at runtime, use `OPENBLAS_NUM_THREADS=1` and control the
+application parallelism with `OMP_NUM_THREADS`.
 
 2. **Build the Project**:
 ```bash

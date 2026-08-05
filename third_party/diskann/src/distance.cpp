@@ -1,17 +1,19 @@
 // TODO
 // CHECK COSINE ON LINUX
 
-#ifdef _WINDOWS
+#if defined(_WINDOWS)
 #include <immintrin.h>
 #include <smmintrin.h>
 #include <tmmintrin.h>
 #include <intrin.h>
-#else
+#elif defined(__x86_64__) || defined(__i386__)
 #include <immintrin.h>
 #endif
 
+#if defined(_WINDOWS) || defined(__x86_64__) || defined(__i386__)
 #include "simd_utils.h"
 #include <cosine_similarity.h>
+#endif
 #include <iostream>
 
 #include "distance.h"

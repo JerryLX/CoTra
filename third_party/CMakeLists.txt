@@ -36,17 +36,6 @@ endif()
 
 include_directories(/usr/local/include)
 include_directories(./3rdparty/faiss)
-link_libraries(/data/share/users/xyzhi/new-spack/spack-0.22.2/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/faiss-1.7.4-7lwxh7hvrens6htzefdgvibwohkv7pdh/lib/libfaiss.a)
-
-#OpenMP
-# find_package(OpenMP)
-
-# if (OPENMP_FOUND)
-#     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-# else()
-# message(FATAL_ERROR "No OpenMP support")
-# endif()
     
 # DiskANN core uses header-only libraries. Only DiskANN tools need program_options which has a linker library,
 # but its size is small. Reduce number of dependent DLLs by linking statically.
@@ -59,78 +48,6 @@ if (NOT Boost_FOUND)
 endif()
 
 include_directories(${Boost_INCLUDE_DIR})
-set(POSSIBLE_OMP_PATHS "/data/share/users/xyzhi/new-spack/spack-0.22.2/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/intel-oneapi-mkl-2024.0.0-a4e6uj4nsyq4llk43fbax6eobust7uug/compiler/latest/lib/libiomp5.so")
-    
-foreach(POSSIBLE_OMP_PATH ${POSSIBLE_OMP_PATHS})
-    if (EXISTS ${POSSIBLE_OMP_PATH})
-        get_filename_component(OMP_PATH ${POSSIBLE_OMP_PATH} DIRECTORY)
-    endif()
-endforeach()
-
-if(NOT OMP_PATH)
-    message(FATAL_ERROR "Could not find Intel OMP in standard locations; use -DOMP_PATH to specify the install location for your environment")
-endif()
-link_directories(${OMP_PATH})
-
-set(POSSIBLE_MKL_LIB_PATHS "/data/share/users/xyzhi/new-spack/spack-0.22.2/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/intel-oneapi-mkl-2024.0.0-a4e6uj4nsyq4llk43fbax6eobust7uug/mkl/latest/lib/intel64/libmkl_core.so")
-
-foreach(POSSIBLE_MKL_LIB_PATH ${POSSIBLE_MKL_LIB_PATHS})
-    if (EXISTS ${POSSIBLE_MKL_LIB_PATH})
-        get_filename_component(MKL_PATH ${POSSIBLE_MKL_LIB_PATH} DIRECTORY)
-    endif()
-endforeach()
-
-set(POSSIBLE_MKL_INCLUDE_PATHS "/data/share/users/xyzhi/new-spack/spack-0.22.2/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/intel-oneapi-mkl-2024.0.0-a4e6uj4nsyq4llk43fbax6eobust7uug/mkl/latest/include")
-
-foreach(POSSIBLE_MKL_INCLUDE_PATH ${POSSIBLE_MKL_INCLUDE_PATHS})
-    if (EXISTS ${POSSIBLE_MKL_INCLUDE_PATH})
-        set(MKL_INCLUDE_PATH ${POSSIBLE_MKL_INCLUDE_PATH})
-    endif()
-endforeach()
-if(NOT MKL_PATH)
-    message(FATAL_ERROR "Could not find Intel MKL in standard locations; use -DMKL_PATH to specify the install location for your environment")
-elseif(NOT MKL_INCLUDE_PATH)
-    message(FATAL_ERROR "Could not find Intel MKL in standard locations; use -DMKL_INCLUDE_PATH to specify the install location for headers for your environment")
-endif()
-if (EXISTS ${MKL_PATH}/libmkl_def.so.2)
-    set(MKL_DEF_SO ${MKL_PATH}/libmkl_def.so.2)
-elseif(EXISTS ${MKL_PATH}/libmkl_def.so)
-    set(MKL_DEF_SO ${MKL_PATH}/libmkl_def.so)
-else()
-    message(FATAL_ERROR "Despite finding MKL, libmkl_def.so was not found in expected locations.")
-endif()
-link_directories(${MKL_PATH})
-include_directories(${MKL_INCLUDE_PATH})
-
-# compile flags and link libraries
-add_compile_options(-m64 -Wl,--no-as-needed)
-if (NOT PYBIND)
-    link_libraries(mkl_intel_ilp64 mkl_intel_thread mkl_core iomp5 pthread m dl)
-else()
-    # static linking for python so as to minimize customer dependency issues
-    link_libraries(
-            ${MKL_PATH}/libmkl_intel_ilp64.a
-            ${MKL_PATH}/libmkl_intel_thread.a
-            ${MKL_PATH}/libmkl_core.a
-            ${MKL_DEF_SO}
-            iomp5
-            pthread
-            m
-            dl
-    )
-endif()
-
-# find_package(MKL)
-
-# if(MKL_FOUND)
-#     message(STATUS "MKL found, MKL Include dirs: ${MKL_INCLUDE_DIRS}, MKL Libraries: ${MKL_LIBRARIES}")
-#     include_directories(/usr/include/mkl)
-#     link_libraries(${MKL_LIBRARIES})
-# else()
-#     message(FATAL_ERROR "No MKL support")
-# endif()
-
-add_definitions(-DMKL_ILP64)
 
 # Section for tcmalloc. The DiskANN tools are always linked to tcmalloc. For Windows, they also need to
 # force-include the _tcmalloc symbol for enabling tcmalloc.
@@ -143,16 +60,14 @@ if (DISKANN_RELEASE_UNUSED_TCMALLOC_MEMORY_AT_CHECKPOINTS)
     add_definitions(-DRELEASE_UNUSED_TCMALLOC_MEMORY_AT_CHECKPOINTS)
 endif()
 
-if (NOT MSVC)
-    # set(DISKANN_ASYNC_LIB /home/xyzhi/spack-0.22.1/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/libaio-0.3.113-urdghmhnrglt3zw2z74jzsn5t2xd6c2p/lib/libaio.so)
-    # include_directories(/home/xyzhi/spack-0.22.1/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/libaio-0.3.113-urdghmhnrglt3zw2z74jzsn5t2xd6c2p/include)
-    set(DISKANN_ASYNC_LIB /data/share/users/xyzhi/new-spack/spack-0.22.2/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/libaio-0.3.113-gk45wlx5vetueq7a43sa4di4uspbz3xb/lib/libaio.so)
-    include_directories(/data/share/users/xyzhi/new-spack/spack-0.22.2/opt/spack/linux-debian9-skylake_avx512/gcc-8.2.0/libaio-0.3.113-gk45wlx5vetueq7a43sa4di4uspbz3xb/include)
-endif()
+find_library(DISKANN_ASYNC_LIB aio REQUIRED)
 
 
 set(ENV{TCMALLOC_LARGE_ALLOC_REPORT_THRESHOLD} 500000000000)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma -msse2 -ftree-vectorize -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free -fopenmp -fopenmp-simd -funroll-loops -Wfatal-errors -DUSE_AVX2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free -fopenmp -fopenmp-simd -funroll-loops -Wfatal-errors")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i.86")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma -msse2 -DUSE_AVX2")
+endif()
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -fPIC")
 
@@ -172,5 +87,4 @@ include(diskann/clang-format.cmake)
 if(PYBIND)
     add_subdirectory(diskann/python)
 endif()
-
 

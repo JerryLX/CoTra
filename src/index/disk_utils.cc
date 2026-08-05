@@ -8,7 +8,6 @@
 #include "diskann/include/gperftools/malloc_extension.h"
 #endif
 
-#include <mkl.h>
 #include <omp.h>
 #include <filesystem>
 
@@ -918,7 +917,6 @@ int kmeans_partition(IndexParameter &index_param) {
 
   if (num_threads != 0) {
     omp_set_num_threads(num_threads);
-    mkl_set_num_threads(num_threads);
   }
 
   diskann::cout << "Starting index partition: max_degree=" << index_param.max_degree
@@ -1131,7 +1129,6 @@ int random_partition(IndexParameter &index_param) {
 
   if (num_threads != 0) {
     omp_set_num_threads(num_threads);
-    mkl_set_num_threads(num_threads);
   }
 
   diskann::cout << "Starting index partition: max_degree=" << index_param.max_degree
@@ -1259,7 +1256,6 @@ void build_all_partition(IndexParameter &index_param){
 
   if (num_threads != 0) {
     omp_set_num_threads(num_threads);
-    mkl_set_num_threads(num_threads);
   }
 
   // set to the same degree for SharedNothing baseline.
@@ -1316,7 +1312,6 @@ void build_local_partition(IndexParameter &index_param) {
 
   if (num_threads != 0) {
     omp_set_num_threads(num_threads);
-    mkl_set_num_threads(num_threads);
   }
 
   // set to the same degree for SharedNothing baseline.
@@ -2216,7 +2211,6 @@ int build_disk_index(
 
   if (num_threads != 0) {
     omp_set_num_threads(num_threads);
-    mkl_set_num_threads(num_threads);
   }
 
   diskann::cout << "Starting index build: R=" << R << " L=" << L
@@ -2513,7 +2507,6 @@ int build_disk_index_4_merge(
 
   if (num_threads != 0) {
     omp_set_num_threads(num_threads);
-    mkl_set_num_threads(num_threads);
   }
 
   diskann::cout << "Starting index build: R=" << R << " L=" << L

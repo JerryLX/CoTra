@@ -3,9 +3,12 @@
 
 #pragma once
 
+#if defined(_WINDOWS) || defined(__x86_64__) || defined(__i386__)
 #include <immintrin.h>
 #include <smmintrin.h>
 #include <tmmintrin.h>
+#include "simd_utils.h"
+#endif
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -13,8 +16,6 @@
 #include <limits>
 #include <algorithm>
 #include <stdexcept>
-
-#include "simd_utils.h"
 
 extern bool Avx2SupportedCPU;
 

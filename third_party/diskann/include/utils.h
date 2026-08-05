@@ -992,7 +992,7 @@ inline void prefetch_vector(const char *vec, size_t vecsize)
 {
     size_t max_prefetch_size = (vecsize / 64) * 64;
     for (size_t d = 0; d < max_prefetch_size; d += 64)
-        _mm_prefetch((const char *)vec + d, _MM_HINT_T0);
+        __builtin_prefetch((const char *)vec + d, 0, 3);
 }
 
 // NOTE :: good efficiency when total_vec_size is integral multiple of 64
@@ -1000,7 +1000,7 @@ inline void prefetch_vector_l2(const char *vec, size_t vecsize)
 {
     size_t max_prefetch_size = (vecsize / 64) * 64;
     for (size_t d = 0; d < max_prefetch_size; d += 64)
-        _mm_prefetch((const char *)vec + d, _MM_HINT_T1);
+        __builtin_prefetch((const char *)vec + d, 0, 2);
 }
 
 // NOTE: Implementation in utils.cpp.
