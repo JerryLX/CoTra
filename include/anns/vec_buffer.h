@@ -18,8 +18,8 @@ struct SyncMsg {
   std::vector<std::pair<dist_t, uint32_t>> local_add_cand;
 
   // core machine ngh update
-  std::vector<uint32_t> core_micro_ngh[MACHINE_NUM];
-  std::vector<std::pair<size_t, uint32_t>> core_large_ngh[MACHINE_NUM];
+  std::vector<uint32_t> core_micro_ngh[MAX_MACHINE_NUM];
+  std::vector<std::pair<size_t, uint32_t>> core_large_ngh[MAX_MACHINE_NUM];
 
   SyncMsg() {}
 
@@ -325,7 +325,7 @@ struct NodeTask {
   uint32_t machine_id;  // orginal machine id.
   uint32_t qid;
   uint32_t node_id;
-  uint32_t is_core_machine[MACHINE_NUM];
+  uint32_t is_core_machine[MAX_MACHINE_NUM];
 
   // Record the ngh offset and degree,
   // only for local compute, no need to transfer.
@@ -658,7 +658,7 @@ struct VectorBuffer {
   std::deque<int> buff_id_list;
   char vector[MAX_CACHE_VEC][MAX_VEC_LEN];
   BufferCache bufcache_ptr[MAX_CACHE_VEC];
-  size_t cur_buffer_id[MACHINE_NUM];
+  size_t cur_buffer_id[MAX_MACHINE_NUM];
   std::deque<size_t> recv_list;
 };
 
@@ -672,9 +672,9 @@ struct SendWriteBuffer {
     available id of buffer for machine m.
   */
 
-  std::deque<uint32_t>* buff_id_list[MACHINE_NUM];
+  std::deque<uint32_t>* buff_id_list[MAX_MACHINE_NUM];
 
-  char* buffer[MACHINE_NUM][MAX_WRITE_NUM];
+  char* buffer[MAX_MACHINE_NUM][MAX_WRITE_NUM];
 
   void init() {
     for (int i = 0; i < MACHINE_NUM; i++) {
@@ -718,7 +718,7 @@ struct RecvWriteBuffer {
   std::deque<char*> scala_meta_queue;  // for scala meta
   std::deque<char*> scala_ngh_queue;  // for scala ngh
 
-  std::deque<uint32_t>* release_id_list[MACHINE_NUM];
+  std::deque<uint32_t>* release_id_list[MAX_MACHINE_NUM];
   // Collected migrate query pointer.
   // Transfer to general serialize and deserialize method in template class.
   std::deque<char*> migrate_queue;
@@ -729,7 +729,7 @@ struct RecvWriteBuffer {
   std::deque<char*> recv_node_res;   // for node task
   std::deque<char*> recv_node_sync;  // for node task
   std::deque<char*> recv_compute;
-  char* buffer[MACHINE_NUM][MAX_WRITE_NUM];
+  char* buffer[MAX_MACHINE_NUM][MAX_WRITE_NUM];
 
   void init() {
     for (int i = 0; i < MACHINE_NUM; i++) {

@@ -35,6 +35,7 @@ int RdmaParameter::parser(commandLine &cmd) {
 
   // get ip config file
   ip_config_file = cmd.getOptionValue("--config_file", "none");
+  machine_num = configure_machine_num(ip_config_file);
 
   port = cmd.getOptionIntValue("-p", DEF_PORT);
   auto ib_devname_str = cmd.getOptionValue("-d", "mlx4_0");

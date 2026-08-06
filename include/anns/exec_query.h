@@ -240,7 +240,7 @@ static void test_vs_recall(
                     appr_alg.localSearchKnn(query_ptr + vecsize * i, k);
 
                 std::priority_queue<std::pair<dist_t, labeltype>>
-                    sub_result[MACHINE_NUM];
+                    sub_result[MAX_MACHINE_NUM];
 
                 appr_alg.collect_query(result, k, sub_result);
 
@@ -536,7 +536,7 @@ static void test_vs_recall(
 #ifdef DEBUG
             printf("end process q%d\n", res->query_id);
             printf("q%u GT machine distribution: \n", res->query_id);
-            uint32_t gt_m_cnt[MACHINE_NUM];
+            uint32_t gt_m_cnt[MAX_MACHINE_NUM];
             memset(gt_m_cnt, 0, sizeof(gt_m_cnt));
             for(auto m: gt_distri){
               gt_m_cnt[m] ++;

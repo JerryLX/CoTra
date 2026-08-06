@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -16,6 +17,10 @@ std::string get_local_ip_addr();
 std::string resolve_hostname(const std::string &hostname);
 // read ip_list
 std::unordered_map<std::string, int> read_ip_map(const std::string &filename);
+
+// Validate the cluster file and publish its active machine count. This may be
+// called repeatedly as long as every caller uses the same configuration.
+uint32_t configure_machine_num(const std::string &config_file);
 
 int get_machine_id(std::string config_file);
 

@@ -1369,7 +1369,7 @@ void RdmaCommunication::swap_scala_index_meta_info(
       memcpy(&send_machine_id, ptr + ofs, sizeof(uint32_t));
       ofs += sizeof(uint32_t);
       printf("recv meta from %d\n", send_machine_id);
-      size_t in_ngh_num[MACHINE_NUM];
+      size_t in_ngh_num[MAX_MACHINE_NUM];
       memcpy(in_ngh_num, ptr + ofs, sizeof(in_ngh_num));
       ofs += sizeof(in_ngh_num);
       for (uint32_t m = 0; m < MACHINE_NUM; m++) {

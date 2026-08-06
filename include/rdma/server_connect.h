@@ -25,7 +25,7 @@ class ServerConnect {
  private:
   static const char *server_prefix;
   std::string machine_id_prefix{"Machine-id"};
-  bool states[MACHINE_NUM];
+  bool states[MAX_MACHINE_NUM];
 
   std::vector<std::string> serverList;
 
@@ -73,7 +73,7 @@ class ServerConnect {
   bool exchange_meta(uint16_t remote_id);
 
  public:
-  ExchangeMeta local_meta[MACHINE_NUM];
+  ExchangeMeta local_meta[MAX_MACHINE_NUM];
   PerThreadStorage<RdmaContext> &rdma_ctx;
 
   ServerConnect(

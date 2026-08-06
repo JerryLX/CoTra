@@ -1470,8 +1470,8 @@ void collect_replica_partition(IndexParameter &index_param) {
 
   // move reader to start and reorganize ngh
   local_index_reader.seekg(index_metadata_size, std::ios::beg);
-  size_t id_offset[MACHINE_NUM];   // id offset
-  size_t ngh_offset[MACHINE_NUM];  // ngh offset
+  size_t id_offset[MAX_MACHINE_NUM];   // id offset
+  size_t ngh_offset[MAX_MACHINE_NUM];  // ngh offset
   memset(id_offset, 0, sizeof(id_offset));
   memset(ngh_offset, 0, sizeof(ngh_offset));
   for (uint32_t i = 0; i < nelems; i++) {
@@ -1584,8 +1584,8 @@ void merge_replica_partition(IndexParameter &index_param) {
 
   uint32_t final_deg = 0, deg = 0;
 
-  uint32_t p_offset[MACHINE_NUM];
-  uint32_t *p_nghs_ptr[MACHINE_NUM];
+  uint32_t p_offset[MAX_MACHINE_NUM];
+  uint32_t *p_nghs_ptr[MAX_MACHINE_NUM];
   for (uint32_t m = 0; m < MACHINE_NUM; m++) {
     p_nghs_ptr[m] = (uint32_t *)index_param.collected_nghs[m];
     p_offset[m] = 0;

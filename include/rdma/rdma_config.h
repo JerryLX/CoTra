@@ -1,14 +1,25 @@
 #pragma once
 
+#include <cstdint>
+
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Enable CUDA feature */
 /* #undef CUDA_PATH */
 
-// #define MACHINE_NUM (4)
-// #define MACHINE_NUM (8)
-#define MACHINE_NUM (16)
+// Static storage is sized for this many machines. The active machine count is
+// loaded from the cluster configuration at runtime.
+inline constexpr uint32_t MAX_MACHINE_NUM = 16;
+inline uint32_t active_machine_num = MAX_MACHINE_NUM;
+inline bool machine_num_configured = false;
+
+inline uint32_t runtime_machine_num() { return active_machine_num; }
+
+// Keep the existing algorithm code readable while making its loop bounds and
+// synchronization thresholds runtime-configurable. Static arrays must use
+// MAX_MACHINE_NUM instead.
+#define MACHINE_NUM (runtime_machine_num())
 #define MAX_THREAD_NUM (16)
 #define GROUP_SIZE (16)
 // NOTE: MAX_READ_NUM is the max read num one thread cand send to one machine

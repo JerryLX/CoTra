@@ -43,7 +43,7 @@ class RdmaCommunication {
   ~RdmaCommunication() {}
 
   // Indicator for termination.
-  bool term[MACHINE_NUM];
+  bool term[MAX_MACHINE_NUM];
 
   int ethernet_leader_connect();
   int ethernet_member_connect(int leader_id);

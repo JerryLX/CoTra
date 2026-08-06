@@ -86,6 +86,7 @@ AnnsParameter::AnnsParameter(int argc, char **argv, IndexParameter &index_param)
     abort();
   }
 
+  configure_machine_num(config_file);
   machine_id = get_machine_id(config_file);
   vecsize = index_param.vec_size;
   vecnum = subset_size_milllions * 1000000;
@@ -302,6 +303,7 @@ IndexParameter::IndexParameter(int argc, char **argv) {
     abort();
   }
 
+  configure_machine_num(config_file);
   machine_id = get_machine_id(config_file);
 
   bool use_filters = (label_file != "") ? true : false;

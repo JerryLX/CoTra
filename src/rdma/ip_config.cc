@@ -1,5 +1,7 @@
 #include "rdma/ip_config.h"
 
+#include "rdma/rdma_config.h"
+
 // Get local machine ip addr.
 std::string get_local_ip_addr() {
   struct ifaddrs *ifaddr, *ifa;
@@ -98,6 +100,60 @@ std::unordered_map<std::string, int> read_ip_map(const std::string &filename) {
   return ipMap;
 }
 
+uint32_t configure_machine_num(const std::string &config_file) {
+  std::ifstream file(config_file);
+  if (!file.is_open()) {
+    throw std::runtime_error("Can not open cluster config: " + config_file);
+  }
+
+  std::string leader, port;
+  if (!std::getline(file, leader) || leader.empty() ||
+      !std::getline(file, port) || port.empty()) {
+    throw std::runtime_error(
+        "Cluster config must start with leader address and memcached port");
+  }
+
+  std::vector<bool> seen_ids(MAX_MACHINE_NUM, false);
+  uint32_t count = 0;
+  std::string line;
+  while (std::getline(file, line)) {
+    if (line.empty()) continue;
+
+    std::istringstream iss(line);
+    std::string host;
+    int id = -1;
+    if (!std::getline(iss, host, '=') || host.empty() || !(iss >> id)) {
+      throw std::runtime_error("Invalid cluster entry: " + line);
+    }
+    if (id < 0 || static_cast<uint32_t>(id) >= MAX_MACHINE_NUM) {
+      throw std::runtime_error("Machine ID exceeds MAX_MACHINE_NUM: " + line);
+    }
+    if (seen_ids[id]) {
+      throw std::runtime_error("Duplicate machine ID in cluster config: " +
+                               std::to_string(id));
+    }
+    seen_ids[id] = true;
+    ++count;
+  }
+
+  if (count == 0) {
+    throw std::runtime_error("Cluster config contains no machines");
+  }
+  for (uint32_t id = 0; id < count; ++id) {
+    if (!seen_ids[id]) {
+      throw std::runtime_error(
+          "Machine IDs must be contiguous and start at zero");
+    }
+  }
+  if (machine_num_configured && active_machine_num != count) {
+    throw std::runtime_error("Conflicting machine counts in cluster configs");
+  }
+
+  active_machine_num = count;
+  machine_num_configured = true;
+  return count;
+}
+
 int get_machine_id(std::string config_file) {
   // const std::string configFile = "../scripts/ip_list.conf";
 
@@ -133,13 +189,13 @@ int get_machine_id(std::string config_file) {
 
 
 std::vector<std::string> get_machine_name(std::string config_file){
-  std::vector<std::string> machine_name;
+  std::vector<std::pair<int, std::string>> entries;
   std::ifstream file(config_file);
 
   if (!file.is_open()) {
     std::cerr << "Fatal error: Can not open ip_list file: " << config_file
               << std::endl;
-    return machine_name;
+    return {};
   }
 
   // get first line of leader machine info. 
@@ -153,11 +209,16 @@ std::vector<std::string> get_machine_name(std::string config_file){
     std::string hostOrIP;
     int id;
     if (std::getline(iss, hostOrIP, '=') && iss >> id) {
-      machine_name.push_back(hostOrIP);
+      entries.emplace_back(id, hostOrIP);
     }
   }
 
   file.close();
+  std::vector<std::string> machine_name(entries.size());
+  for (const auto &[id, host] : entries) {
+    if (id >= 0 && static_cast<size_t>(id) < machine_name.size()) {
+      machine_name[id] = host;
+    }
+  }
   return machine_name;
 }
-

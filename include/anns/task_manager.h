@@ -24,12 +24,12 @@ class TaskManager {
   uint32_t local_id;
 
   // my_machine_id: local task, others id: to send task.
-  std::vector<ComputeTask<dist_t>> task_queue[MACHINE_NUM];
-  std::vector<NodeTask> node_task_queue[MACHINE_NUM];
+  std::vector<ComputeTask<dist_t>> task_queue[MAX_MACHINE_NUM];
+  std::vector<NodeTask> node_task_queue[MAX_MACHINE_NUM];
   std::vector<NodeTask> cur_node_queue;
-  std::vector<NodeResult<dist_t>> node_result_queue[MACHINE_NUM];
+  std::vector<NodeResult<dist_t>> node_result_queue[MAX_MACHINE_NUM];
   // send from non-core to core machine sync msg.
-  std::vector<NonCoreSyncMsg<dist_t>> noncore_sync_msg[MACHINE_NUM];
+  std::vector<NonCoreSyncMsg<dist_t>> noncore_sync_msg[MAX_MACHINE_NUM];
 
   std::vector<ComputeTask<dist_t>> cur_task_queue;
   std::vector<ComputeTask<dist_t>> next_task_queue;
@@ -38,11 +38,11 @@ class TaskManager {
   std::vector<size_t> async_task_queue;
 
   // my_machine_id: recved compute vectors, others id: to send compute.
-  std::vector<ComputeMsg> compute_queue[MACHINE_NUM];
+  std::vector<ComputeMsg> compute_queue[MAX_MACHINE_NUM];
 
   // my_machine_id: recved results, others id: to send results.
   // Only for query in pre-stage.
-  std::vector<ResultMsg<dist_t>> result_queue[MACHINE_NUM];
+  std::vector<ResultMsg<dist_t>> result_queue[MAX_MACHINE_NUM];
 
   // global balance queue pointer.
   BalanceQueue<ComputeTask<dist_t>>* ba_task_queue;

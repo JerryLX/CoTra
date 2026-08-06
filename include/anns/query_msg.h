@@ -48,11 +48,11 @@ class QueryMsg {
   uint32_t b2_original_mid{0};
 
   // Path count, for migration ref.
-  uint32_t path_cnt[MACHINE_NUM];
+  uint32_t path_cnt[MAX_MACHINE_NUM];
 
   // [TEMP] for profiling.
-  uint32_t tmp_m_cnt[MACHINE_NUM];
-  uint32_t tmp_path_cnt[MACHINE_NUM];
+  uint32_t tmp_m_cnt[MAX_MACHINE_NUM];
+  uint32_t tmp_path_cnt[MAX_MACHINE_NUM];
 
   uint32_t max_path_id{0}, max_path_cnt{0};
   uint32_t path_length{0};
@@ -63,11 +63,11 @@ class QueryMsg {
   uint8_t global_term{0};
 
   std::vector<uint32_t> core_machine;
-  uint32_t is_core_machine[MACHINE_NUM];
+  uint32_t is_core_machine[MAX_MACHINE_NUM];
 
   // filterred candidates.
-  std::vector<std::pair<dist_t, uint32_t>> filterred[MACHINE_NUM];
-  uint32_t filter_num[MACHINE_NUM];
+  std::vector<std::pair<dist_t, uint32_t>> filterred[MAX_MACHINE_NUM];
+  uint32_t filter_num[MAX_MACHINE_NUM];
 
   uint32_t post_cnt{0}, recv_cnt{0};  // post/recv count.
   uint32_t nocore_post{0}, nocore_recv{0};  // no-core post/recv count.

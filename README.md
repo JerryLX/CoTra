@@ -71,6 +71,10 @@ Edit <your_config>.conf file in ./scripts
 The first and second lines are the leader machine's ip and port, please select one machine of cluster as the leader.
 We use **machine ID** to identify each machine, which should be user defined, and the leader machine's ID must be 0.
 Then write the IPs and IDs of every machine in cluster on the following lines.
+The active machine count is read from this file at runtime, so switching among
+1--16 machines does not require recompilation. IDs must be unique and contiguous
+from 0. `MAX_MACHINE_NUM` in `include/rdma/rdma_config.h` is only the static
+capacity limit.
 e.g.,
 ```bash
 <leadr_machine_ip>

@@ -527,7 +527,7 @@ void ScalaBuild::verify_scala_v3() {
     <local_ngh_array: local_ngh_ele_size> * part_vec_num,
     <remote_ngh_array: uint32_t> * remote_ngh_num.
   */
-  char *deg_ngh[MACHINE_NUM];
+  char *deg_ngh[MAX_MACHINE_NUM];
   uint32_t local_ngh_ele_size;
   for (uint32_t m = 0; m < MACHINE_NUM; m++) {
     if (!std::filesystem::exists(index_param.final_part_scala_index_path[m])) {

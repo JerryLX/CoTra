@@ -38,39 +38,39 @@ class RdmaContext {
   uint64_t read_size, read_cnt;  // bytes, number
   uint64_t write_size, write_cnt;
 
-  MessageContext local_mr_msg[MACHINE_NUM];
-  MessageContext remote_mr_msg[MACHINE_NUM];
+  MessageContext local_mr_msg[MAX_MACHINE_NUM];
+  MessageContext remote_mr_msg[MAX_MACHINE_NUM];
 
   // Store the vector data for read.
-  void *for_read_ptr[MACHINE_NUM];
-  struct ibv_mr *for_read_mr[MACHINE_NUM];
+  void *for_read_ptr[MAX_MACHINE_NUM];
+  struct ibv_mr *for_read_mr[MAX_MACHINE_NUM];
 
   // Store the read vector data.
   void *read_to_ptr[MAX_CACHE_VEC];
   struct ibv_mr *read_to_mr;
 
   // Store the send write msg.
-  void *send_write_ptr[MACHINE_NUM][MAX_WRITE_NUM];
-  struct ibv_mr *send_write_mr[MACHINE_NUM];
+  void *send_write_ptr[MAX_MACHINE_NUM][MAX_WRITE_NUM];
+  struct ibv_mr *send_write_mr[MAX_MACHINE_NUM];
 
   // Store the recv write msg.
-  void *recv_write_ptr[MACHINE_NUM][MAX_WRITE_NUM];
-  struct ibv_mr *recv_write_mr[MACHINE_NUM];
+  void *recv_write_ptr[MAX_MACHINE_NUM][MAX_WRITE_NUM];
+  struct ibv_mr *recv_write_mr[MAX_MACHINE_NUM];
 
   // Store the send data.
-  void *send_ptr[MACHINE_NUM][MAX_RECV_NUM];
-  struct ibv_mr *send_mr[MACHINE_NUM];
+  void *send_ptr[MAX_MACHINE_NUM][MAX_RECV_NUM];
+  struct ibv_mr *send_mr[MAX_MACHINE_NUM];
 
   // Store the recv data.
-  void *recv_ptr[MACHINE_NUM][MAX_RECV_NUM];
-  struct ibv_mr *recv_mr[MACHINE_NUM];
+  void *recv_ptr[MAX_MACHINE_NUM][MAX_RECV_NUM];
+  struct ibv_mr *recv_mr[MAX_MACHINE_NUM];
 
   struct ibv_cq *send_cq;
   struct ibv_wc s_wc[MAX_WC_NUM];
   struct ibv_cq *recv_cq;
   struct ibv_wc r_wc[MAX_WC_NUM];
 
-  struct ibv_qp *qp[MACHINE_NUM];
+  struct ibv_qp *qp[MAX_MACHINE_NUM];
 #ifdef HAVE_IBV_WR_API
   struct ibv_qp_ex **qpx;
 #ifdef HAVE_MLX5DV
@@ -83,22 +83,22 @@ class RdmaContext {
 
   // read operation
   struct ibv_sge sge_list[MAX_CACHE_VEC];
-  struct ibv_send_wr wr[MACHINE_NUM][MAX_READ_NUM];  // only for read operation.
-  size_t wr_cnt[MACHINE_NUM];
+  struct ibv_send_wr wr[MAX_MACHINE_NUM][MAX_READ_NUM];  // only for read operation.
+  size_t wr_cnt[MAX_MACHINE_NUM];
 
   size_t post_num, collect_num;
 
   // write operation (no need for recv sg list)
   // struct ibv_sge sg_list[MAX_RECV_NUM];  // TODO: for write test only.
-  struct ibv_sge write_sge_list[MACHINE_NUM][MAX_WRITE_NUM][MAX_SGE_NUM];
-  struct ibv_send_wr wwr[MACHINE_NUM][MAX_WRITE_NUM];
-  struct ibv_recv_wr rwwr[MACHINE_NUM][MAX_WRITE_NUM];
+  struct ibv_sge write_sge_list[MAX_MACHINE_NUM][MAX_WRITE_NUM][MAX_SGE_NUM];
+  struct ibv_send_wr wwr[MAX_MACHINE_NUM][MAX_WRITE_NUM];
+  struct ibv_recv_wr rwwr[MAX_MACHINE_NUM][MAX_WRITE_NUM];
 
   // send/recv operation
-  struct ibv_sge send_sge_list[MACHINE_NUM][MAX_RECV_NUM];
-  struct ibv_sge recv_sge_list[MACHINE_NUM][MAX_RECV_NUM];
-  struct ibv_send_wr swr[MACHINE_NUM][MAX_RECV_NUM];  // only for send op.
-  struct ibv_recv_wr rwr[MACHINE_NUM][MAX_RECV_NUM];  // for recv op.
+  struct ibv_sge send_sge_list[MAX_MACHINE_NUM][MAX_RECV_NUM];
+  struct ibv_sge recv_sge_list[MAX_MACHINE_NUM][MAX_RECV_NUM];
+  struct ibv_send_wr swr[MAX_MACHINE_NUM][MAX_RECV_NUM];  // only for send op.
+  struct ibv_recv_wr rwr[MAX_MACHINE_NUM][MAX_RECV_NUM];  // for recv op.
 
   // uint64_t size;
   int cache_line_size;

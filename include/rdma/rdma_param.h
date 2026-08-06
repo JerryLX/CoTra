@@ -131,7 +131,7 @@ class RdmaParameter {
   int pkey_index;
   MachineType machine;
   int ai_family;
-  int sockfd[MACHINE_NUM];
+  int sockfd[MAX_MACHINE_NUM];
   int cache_line_size;
   struct memory_ctx *(*memory_create)();
   uint8_t sl;

@@ -72,7 +72,7 @@ class IndexParameter {
   std::string temp_pos2label_map_file;
   std::string temp_id2part_map_file;
 
-  std::string b2_index_file[MACHINE_NUM];
+  std::string b2_index_file[MAX_MACHINE_NUM];
   std::string local_b2_index_file;
 
   // only for b1graph transfered from vamana
@@ -96,11 +96,11 @@ class IndexParameter {
       final_scala_index_path;         // final **local** merged scala index path (final_part_scala_index_path[local id])
   std::string final_scala_data_path;  // final **local** merged scala data path (final_part_scala_data_path[local id])
   // final **all** merged scala index and data path.
-  std::string final_part_scala_index_path[MACHINE_NUM];
-  std::string final_part_scala_data_path[MACHINE_NUM];
+  std::string final_part_scala_index_path[MAX_MACHINE_NUM];
+  std::string final_part_scala_data_path[MAX_MACHINE_NUM];
   // final **all** merged index path, for test merge
-  std::string final_part_index_path[MACHINE_NUM];
-  std::string final_part_b1_index_path[MACHINE_NUM];
+  std::string final_part_index_path[MAX_MACHINE_NUM];
+  std::string final_part_b1_index_path[MAX_MACHINE_NUM];
   std::string disk_index_path;
   std::string medoids_path;
   std::string centroids_path;
@@ -133,17 +133,17 @@ class IndexParameter {
   std::string merged_meta_index_prefix;
 
   // for partition ids without replica.
-  std::string part_noreplica_idmap_filename[MACHINE_NUM];
-  std::string part_noreplica_base_filename[MACHINE_NUM];
-  std::string part_noreplica_labels_filename[MACHINE_NUM];
+  std::string part_noreplica_idmap_filename[MAX_MACHINE_NUM];
+  std::string part_noreplica_base_filename[MAX_MACHINE_NUM];
+  std::string part_noreplica_labels_filename[MAX_MACHINE_NUM];
 
   // for partition ids with replica.
-  std::string part_replica_idmap_filename[MACHINE_NUM];
-  std::string part_replica_base_filename[MACHINE_NUM];
-  std::string part_replica_labels_filename[MACHINE_NUM];
-  std::string part_replica_index_filename[MACHINE_NUM];
+  std::string part_replica_idmap_filename[MAX_MACHINE_NUM];
+  std::string part_replica_base_filename[MAX_MACHINE_NUM];
+  std::string part_replica_labels_filename[MAX_MACHINE_NUM];
+  std::string part_replica_index_filename[MAX_MACHINE_NUM];
 
-  uint32_t partition_size[MACHINE_NUM];
+  uint32_t partition_size[MAX_MACHINE_NUM];
   // local partition vector number without replica.
   uint32_t local_partition_size;
 
@@ -154,30 +154,30 @@ class IndexParameter {
   // store the sorted ids (only belong to this part) in this partition.
   std::vector<uint32_t> local_noreplica_ids;
   // store the sorted ids of each partition (with replica).
-  std::vector<uint32_t> part_replica_ids[MACHINE_NUM];
+  std::vector<uint32_t> part_replica_ids[MAX_MACHINE_NUM];
   // store the sorted ids of each partition (without replica).
-  std::vector<uint32_t> part_noreplica_ids[MACHINE_NUM];
+  std::vector<uint32_t> part_noreplica_ids[MAX_MACHINE_NUM];
 
   // kmeans_idmap[vid]: parition id stored the vid (here vid is label).
   uint32_t *kmeans_id2part_map;
 
   // whether recv all meta for one partition.
-  bool recv_meta[MACHINE_NUM];
+  bool recv_meta[MAX_MACHINE_NUM];
 
   /* dispatch & collect ids */
-  size_t dispatch_id_num[MACHINE_NUM];  // for send meta
-  char *dispatch_ids[MACHINE_NUM];        // for send ids.
-  size_t collect_id_num[MACHINE_NUM];   // for recv meta
-  size_t collect_id_cnt[MACHINE_NUM];   // for recv count.
-  char *collected_ids[MACHINE_NUM];       // recved id to merge.
+  size_t dispatch_id_num[MAX_MACHINE_NUM];  // for send meta
+  char *dispatch_ids[MAX_MACHINE_NUM];        // for send ids.
+  size_t collect_id_num[MAX_MACHINE_NUM];   // for recv meta
+  size_t collect_id_cnt[MAX_MACHINE_NUM];   // for recv count.
+  char *collected_ids[MAX_MACHINE_NUM];       // recved id to merge.
 
   /* dispatch & collect nghs */
   // store the size of dispatch nghs. (local partitions)
-  size_t dispatch_ngh_num[MACHINE_NUM];  // for send meta
-  char *dispatch_nghs[MACHINE_NUM];        // for send nghs.
-  size_t collect_ngh_num[MACHINE_NUM];   // for recv meta
-  size_t collect_ngh_cnt[MACHINE_NUM];   // for recv count.
-  char *collected_nghs[MACHINE_NUM];       // recved ngh to merge.
+  size_t dispatch_ngh_num[MAX_MACHINE_NUM];  // for send meta
+  char *dispatch_nghs[MAX_MACHINE_NUM];        // for send nghs.
+  size_t collect_ngh_num[MAX_MACHINE_NUM];   // for recv meta
+  size_t collect_ngh_cnt[MAX_MACHINE_NUM];   // for recv count.
+  char *collected_nghs[MAX_MACHINE_NUM];       // recved ngh to merge.
 
   // map
   uint32_t *label2pos_map;

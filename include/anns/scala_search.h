@@ -536,7 +536,7 @@ class ScalaSearch : public AlgorithmInterface<dist_t> {
         candidate_set;
     dist_t lowerBound;
     size_t ef = std::max(ef_, k);
-    uint32_t filter_num[MACHINE_NUM];
+    uint32_t filter_num[MAX_MACHINE_NUM];
     memset(filter_num, 0, sizeof(filter_num));
 
     auto proc_candidate = [&](dist_t dist, uint32_t candidate_id) {
