@@ -68,8 +68,12 @@ clear_memcache() {
         rm -f /tmp/memcached.pid
     fi
 
-    # launch memcached
-    memcached -u root -l ${addr} -p  ${port} -c 10000 -d -P /tmp/memcached.pid
+    # memcached refuses to start as root unless an explicit user is supplied.
+    local memcached_args=(-l "$addr" -p "$port" -c 10000 -d -P /tmp/memcached.pid)
+    if [[ $EUID -eq 0 ]]; then
+      memcached_args=(-u root "${memcached_args[@]}")
+    fi
+    memcached "${memcached_args[@]}"
     sleep 1
 
     # init 
@@ -79,7 +83,6 @@ clear_memcache() {
   fi
   return 1
 }
-
 
 
 
