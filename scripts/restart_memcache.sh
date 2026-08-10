@@ -68,12 +68,35 @@ clear_memcache() {
         rm -f /tmp/memcached.pid
     fi
 
-    # memcached refuses to start as root unless an explicit user is supplied.
-    local memcached_args=(-l "$addr" -p "$port" -c 10000 -d -P /tmp/memcached.pid)
-    if [[ $EUID -eq 0 ]]; then
-      memcached_args=(-u root "${memcached_args[@]}")
+    # memcached must drop privileges when its launcher is root. Prefer the
+    # distribution's service account and fall back to the standard nobody user.
+    local memcached_bin
+    local memcached_user
+    memcached_bin=$(type -P memcached) || {
+      echo "Error: memcached executable not found." >&2
+      return 1
+    }
+    if [[ -n ${MEMCACHED_RUN_USER:-} ]]; then
+      memcached_user=$MEMCACHED_RUN_USER
+    elif [[ $(id -u) -eq 0 ]]; then
+      for memcached_user in memcache memcached nobody; do
+        if getent passwd "$memcached_user" >/dev/null; then
+          break
+        fi
+        memcached_user=
+      done
+      if [[ -z $memcached_user ]]; then
+        echo "Error: no non-root account is available for memcached." >&2
+        return 1
+      fi
+    else
+      memcached_user=$(id -un)
     fi
-    memcached "${memcached_args[@]}"
+    if ! "$memcached_bin" -u "$memcached_user" -l "$addr" -p "$port" \
+      -c 10000 -d -P /tmp/memcached.pid; then
+      echo "Error: failed to start memcached as user $memcached_user." >&2
+      return 1
+    fi
     sleep 1
 
     # init 
@@ -83,7 +106,4 @@ clear_memcache() {
   fi
   return 1
 }
-
-
-
 
