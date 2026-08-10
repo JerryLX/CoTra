@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CoTra 完整代码学习指南</title>
+  <style>
+    :root{--bg:#f6f7fb;--paper:#fff;--ink:#18202a;--muted:#647184;--line:#dce2ea;--blue:#3157c8;--cyan:#087f8c;--orange:#bd5b13;--red:#ad2e3e;--code:#111827;--nav:270px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.72 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    nav{position:fixed;inset:0 auto 0 0;width:var(--nav);padding:26px 20px;overflow:auto;background:#172033;color:#e8edf7}nav h1{font-size:20px;margin:0 0 6px}nav .sub{font-size:12px;color:#aebbd1;margin-bottom:22px}nav a{display:block;color:#cbd5e7;text-decoration:none;padding:6px 9px;border-radius:6px}nav a:hover{background:#25314b;color:white}nav .lv2{padding-left:20px;font-size:13px}
+    main{margin-left:var(--nav);max-width:1240px;padding:42px 54px 100px}section{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:28px 34px;margin:0 0 24px;box-shadow:0 2px 10px #18202a0a}h1,h2,h3{line-height:1.3}h2{font-size:24px;margin:0 0 20px;border-bottom:1px solid var(--line);padding-bottom:12px}h3{font-size:18px;margin:28px 0 10px;color:#263d76}p{margin:8px 0 14px}.lead{font-size:18px;color:#38465b}.muted{color:var(--muted)}code{background:#edf1f7;padding:2px 5px;border-radius:4px;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}pre{background:var(--code);color:#d8e2f1;padding:18px 20px;border-radius:8px;overflow:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}.tag{display:inline-block;padding:2px 8px;border-radius:99px;background:#e8edff;color:#2948a7;font-size:12px;margin-right:5px}.callout{border-left:4px solid var(--blue);background:#f0f4ff;padding:12px 16px;margin:14px 0}.warn{border-color:var(--orange);background:#fff7ed}.danger{border-color:var(--red);background:#fff1f2}.good{border-color:var(--cyan);background:#effcfa}
+    table{border-collapse:collapse;width:100%;margin:12px 0 18px;font-size:14px}th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}th{background:#f0f3f8;color:#34425a}.flow{display:flex;align-items:stretch;gap:8px;overflow:auto;margin:18px 0}.box{min-width:145px;border:1px solid #bac6db;background:#f8faff;border-radius:8px;padding:11px;text-align:center}.arrow{align-self:center;color:var(--blue);font-size:22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:8px;padding:14px}.card h3{margin:0 0 6px;font-size:16px}.tree{white-space:pre;overflow:auto;background:#f8fafc;border:1px solid var(--line);padding:16px;border-radius:8px;font-family:ui-monospace,monospace;font-size:13px}.kbd{border:1px solid #bbc3cf;border-bottom-width:2px;padding:1px 5px;border-radius:4px;background:white}.pill-red{color:#9f1239;background:#ffe4e6}.num{font-size:28px;font-weight:700;color:var(--blue)}
+    @media(max-width:900px){nav{position:static;width:auto}main{margin:0;padding:18px}section{padding:22px}.grid{grid-template-columns:1fr}.flow{flex-direction:column}.arrow{transform:rotate(90deg)}}
+    @media print{nav{display:none}main{margin:0;max-width:none;padding:0}section{box-shadow:none;break-inside:avoid}body{background:white}}
+  </style>
+</head>
+<body>
+<nav>
+  <h1>CoTra 代码指南</h1><div class="sub">基于当前仓库静态分析 · 2026-07-24</div>
+  <a href="#overview">1. 项目全景</a><a href="#map">2. 目录与模块</a><a href="#concept">3. 核心概念</a>
+  <a href="#build-flow">4. 索引构建流程</a><a href="#query-flow">5. 查询流程</a><a class="lv2" href="#variants">检索模式</a><a class="lv2" href="#termination">终止检测</a>
+  <a href="#storage">6. 数据与索引格式</a><a href="#rdma">7. RDMA 通信层</a><a href="#runtime">8. CoroMem 运行时</a>
+  <a href="#classes">9. 关键类关系</a><a href="#config">10. 参数与运行</a><a href="#risks">11. 风险与改进</a><a href="#reading">12. 推荐阅读路线</a>
+</nav>
+<main>
+<section id="overview">
+  <h2>1. 项目全景</h2>
+  <p class="lead"><strong>一句话：</strong>CoTra 把大规模近似最近邻图切分到多台机器，以 RDMA 暴露本地向量内存，并通过“顶层路由 + 分布式图遍历 + 任务下推”减少远程访问和 CPU 通信开销。</p>
+  <div class="grid">
+    <div class="card"><div class="num">2</div><b>主程序</b><br><code>scala_index</code> 构建索引；<code>scala_anns</code> 加载并评测查询。</div>
+    <div class="card"><div class="num">3</div><b>主体层次</b><br>索引/搜索算法、RDMA 通信、CoroMem 并行运行时。</div>
+    <div class="card"><div class="num">16</div><b>编译期机器数</b><br><code>MACHINE_NUM</code> 当前固定为 16，不是运行期参数。</div>
+    <div class="card"><div class="num">~39.7K</div><b>本项目 C/C++ 行数</b><br>统计 <code>include/</code>、<code>src/</code>、<code>coromem/</code>、<code>tests/</code>，不含第三方。</div>
+  </div>
+  <h3>系统视角</h3>
+  <div class="flow"><div class="box">原始向量<br><small>BIN 格式</small></div><div class="arrow">→</div><div class="box">平衡 K-means / 随机分片<br><small>可带副本</small></div><div class="arrow">→</div><div class="box">每机 DiskANN/Vamana<br><small>局部图</small></div><div class="arrow">→</div><div class="box">跨分片合并与重排<br><small>ScalaGraph V3</small></div><div class="arrow">→</div><div class="box">顶层 HNSW<br><small>查询路由</small></div></div>
+  <p>在线查询时，每台机器同时承担查询发起者、图计算者和 RDMA 内存提供者的角色。查询被均分到机器，各机器用顶层索引选择候选分片，再协作遍历全局图。</p>
+  <div class="callout good"><b>边界：</b><code>third_party/diskann</code> 是上游依赖，CoTra 的主要增量位于分片、图格式变换、分布式搜索、RDMA 通信和运行时调度。本文解释接入点，不逐行复述 DiskANN 源码。</div>
+</section>
+
+<section id="map">
+  <h2>2. 目录与模块地图</h2>
+  <div class="tree">CoTra/
+├── tests/scala_index.cc       # 建索引入口
+├── tests/scala_anns.cc        # 检索/评测入口
+├── include/index/             # 分片、图表示、顶层索引、构建控制
+├── src/index/                 # 大型构建与格式转换实现
+├── include/anns/              # 查询状态、任务、搜索算法、距离空间
+├── include/rdma/ + src/rdma/  # verbs 资源、连接、收发、元数据协调
+├── coromem/                   # 线程池、NUMA、协程、并行循环、工作队列
+├── scripts/                   # 数据集 × 规模 × 方案的实验脚本
+├── third_party/diskann/       # DiskANN 子模块
+└── CMakeLists.txt             # 构建 rdma_anns、rdma_index 与测试程序</div>
+  <table><thead><tr><th>模块</th><th>关键文件</th><th>职责</th></tr></thead><tbody>
+    <tr><td>参数</td><td><code>index_param.*</code>, <code>anns_param.h</code>, <code>rdma_param.*</code></td><td>三套参数解析器共享同一命令行，借助 <code>allow_unregistered()</code> 各取所需。</td></tr>
+    <tr><td>构建编排</td><td><code>scala_build.h/.cc</code></td><td>RDMA 初始化、分片、分发、局部建图、跨机合并、格式转换、顶层索引。</td></tr>
+    <tr><td>索引表示</td><td><code>b1_graph.h</code>, <code>scala_graph.h</code>, <code>top_index.h</code></td><td>基线 HNSW 风格布局、ScalaGraph V3 紧凑分片布局、HNSW 路由层。</td></tr>
+    <tr><td>搜索</td><td><code>scala_search.h</code>, <code>exec_query.h</code></td><td>图搜索原语、远端访问、子查询协作、批量评测与 recall/QPS 统计。</td></tr>
+    <tr><td>消息/任务</td><td><code>query_msg.h</code>, <code>vec_buffer.h</code>, <code>task_manager.h</code></td><td>查询状态与候选集、序列化协议、每线程队列及收发结果归并。</td></tr>
+    <tr><td>通信</td><td><code>rdma_comm.*</code>, <code>rdma_context.*</code>, <code>server_connect.*</code></td><td>QP/CQ/MR 生命周期、RDMA Read/Write/Send、完成队列轮询和屏障。</td></tr>
+    <tr><td>运行时</td><td><code>coromem/include/runtime/*</code>, <code>threadpool.*</code></td><td>拓扑感知线程池、每线程存储、并行循环、work stealing 与协程对象。</td></tr>
+  </tbody></table>
+</section>
+
+<section id="concept">
+  <h2>3. 先掌握的核心概念</h2>
+  <h3>图 ANNS</h3><p>每个向量是节点，边连接相近向量。查询维护两个堆：<code>candidate_set</code> 是待扩展候选，<code>top_candidates</code> 是当前最好结果；不断取最近候选并访问邻居，直到其距离不可能改善当前第 <code>ef</code> 名。</p>
+  <h3>分片与副本</h3><p><code>part_noreplica_ids[p]</code> 表示真正归属分片 p 的节点；<code>part_replica_ids[p]</code> 还包含为了保持跨分片图质量而复制的节点。构建后需要把副本产生的边收集回节点归属机器。</p>
+  <h3>B1、B2 与 ScalaGraph</h3>
+  <table><thead><tr><th>名称</th><th>代码含义</th><th>访问方式</th></tr></thead><tbody>
+    <tr><td>B1</td><td>全局/统一编号的 HNSW 风格 level-0 内存布局；由 <code>B1GraphInterface</code> 及其实现加载。</td><td>可判断节点所在机器和内部编号，远端节点用 RDMA 读。</td></tr>
+    <tr><td>B2</td><td>shared-nothing 基线，每机持有独立局部图；查询派发到多个分片后归并。</td><td>任务/查询消息发送到目标机器执行。</td></tr>
+    <tr><td>ScalaGraph V3</td><td>按归属重排全局节点号，本地邻接与远端邻接分开编码，针对 RDMA 粒度优化。</td><td>微小远端邻接直接读向量；大邻接任务下推至数据所在机。</td></tr>
+  </tbody></table>
+  <h3>顶层索引</h3><p><code>HNSWTopIndex</code> 从抽样数据构建较小的 HNSW，用作“先找到哪些分片值得搜索”的路由器。它不是最终结果索引；最终精排仍依赖完整分片图和原向量距离。</p>
+</section>
+
+<section id="build-flow">
+  <h2>4. 索引构建完整流程</h2>
+  <p>入口是 <code>tests/scala_index.cc:12</code>。其调用顺序本身就是最可靠的流程骨架：</p>
+  <pre>SharedMem → 解析 RdmaParameter / IndexParameter
+          → ScalaBuild::init_rdma()
+          → partition()
+          → swap_partition_info()
+          → build()
+          → [SCALA_V3] merge() → transfer_to_scala_v3()
+                         → merge_all_b1_index() → build_hnsw_top_index()
+          → [SharedNothing] shared_nothing_checkpoint()
+                            → trans_to_b2graph() → build_hnsw_top_index()</pre>
+  <h3>4.1 初始化与分片</h3>
+  <ol>
+    <li><code>SharedMem</code> 建立线程池、NUMA 内存和线程局部存储环境；构建前线程池暂时 pause。</li>
+    <li><code>IndexParameter</code> 读取原始 BIN 文件头获得 <code>vec_num</code>、<code>dim</code> 和元素大小，同时衍生大量临时/最终文件名。</li>
+    <li><code>ScalaBuild::init_rdma()</code> 将通信缓冲区注册为 MR，并通过 memcached 交换每线程 QP/MR 元数据。</li>
+    <li>0 号机执行 <code>kmeans_partition()</code> 或 <code>random_partition()</code>。输出每分片的 base、idmap、可选 labels，以及 <code>id → partition</code> 映射。</li>
+    <li><code>write_partition_info()</code> 生成 <code>label ↔ position</code> 映射，使全局节点按分片连续排列；随后通过 RDMA 把分片元信息分发给成员机。</li>
+  </ol>
+  <h3>4.2 局部建图</h3><p>每台机器在自己的分片上调用 <code>diskann::build_local_partition&lt;T&gt;()</code>。模板类型由 <code>int8 / uint8 / float</code> 和标签类型决定。底层走 DiskANN/Vamana 建图参数 <code>R</code>（最大度）、<code>L</code>（构建搜索宽度）、内存预算和 PQ 配置。</p>
+  <h3>4.3 CoTra 合并路径</h3>
+  <ol>
+    <li><code>partition_checkpoint()</code> 读回本地无副本/含副本 ID 和三个全局映射。</li>
+    <li><code>collect_replica_partition()</code> 从本机局部索引中按“节点真实归属”重新组织副本边。</li>
+    <li><code>send_replica_partition()</code> 对每个目标机依次发送 meta、ID、邻接数据；目标机轮询并收齐所有来源。</li>
+    <li><code>merge_replica_partition()</code> 将远端贡献合并成归属节点的完整邻接表。</li>
+    <li><code>transfer_to_b1graph_format()</code> 先形成便于校验/兼容的 B1 格式；<code>transfer_to_scala_v3()</code> 再转成在线访问的紧凑格式。</li>
+    <li>0 号机汇总 B1 并从样本构建顶层 HNSW。</li>
+  </ol>
+  <div class="callout"><b>为什么有两次“合并”？</b>第一次是把副本机器上生成的边归还给节点所属机器；第二次是布局转换，把算法意义上的邻接表变成适合本地访问和远端 RDMA 的物理格式。</div>
+</section>
+
+<section id="query-flow">
+  <h2>5. 查询完整流程</h2>
+  <p>入口是 <code>tests/scala_anns.cc:5</code>。它按距离类型和数据类型实例化模板，最后统一进入 <code>test_vs_recall()</code>。</p>
+  <div class="flow"><div class="box">加载 query + GT</div><div class="arrow">→</div><div class="box">GraphIndex 选择图实现</div><div class="arrow">→</div><div class="box">ScalaSearch 初始化<br>并注册本地分区</div><div class="arrow">→</div><div class="box">按 ef 批量搜索</div><div class="arrow">→</div><div class="box">汇总 Recall / QPS / 延迟</div></div>
+  <h3>5.1 类型分派</h3>
+  <table><thead><tr><th>命令行</th><th>距离空间</th><th><code>ScalaSearch&lt;dist_t&gt;</code></th></tr></thead><tbody>
+    <tr><td><code>l2 + uint8</code></td><td><code>L2SpaceI</code></td><td><code>int</code></td></tr>
+    <tr><td><code>l2 + int8</code></td><td><code>L2SpaceII</code></td><td><code>int</code></td></tr>
+    <tr><td><code>l2 + float</code></td><td><code>L2Space</code></td><td><code>float</code></td></tr>
+    <tr><td><code>mips + float</code></td><td><code>InnerProductSpace</code></td><td><code>float</code></td></tr>
+  </tbody></table>
+  <h3 id="variants">5.2 检索模式</h3>
+  <table><thead><tr><th><code>app_type</code></th><th>行为</th><th>适合用来理解</th></tr></thead><tbody>
+    <tr><td><code>single</code></td><td>单机加载 B1 图并做普通 best-first 图搜索。</td><td>算法基线。</td></tr>
+    <tr><td><code>b1</code></td><td>分布式全局图，按节点归属进行远端访问/迁移。</td><td>远程图访问成本。</td></tr>
+    <tr><td><code>b2</code></td><td>查询派发到 shared-nothing 分片，各自搜索后归并。</td><td>分片级 scatter/gather。</td></tr>
+    <tr><td><code>b2kmeans</code>, <code>b2kmeansbatch</code></td><td>用 K-means/顶层索引选择分片，支持批量派发。</td><td>路由质量与开销。</td></tr>
+    <tr><td><code>scala_v3</code></td><td>CoTra 主路径：顶层路由、跨机子查询、细粒度任务与异步 RDMA。</td><td>系统核心贡献。</td></tr>
+  </tbody></table>
+  <h3>5.3 Scala V3 的一次查询</h3>
+  <ol>
+    <li><b>分配：</b><code>exec_query.h</code> 把 <code>qsize / MACHINE_NUM</code> 个查询分给每台机器，通过 <code>do_all_standby</code> 并行执行并允许窃取任务。</li>
+    <li><b>初始化：</b><code>scala_search_init()</code> 保存查询基址；<code>scala_search_sub(qid)</code> 创建 <code>QueryMsg</code>，包括向量、<code>ef</code>、候选堆、访问集合和状态。</li>
+    <li><b>预阶段：</b>顶层索引产生入口节点和核心机器集合，建立初始 <code>lowerBound</code>。</li>
+    <li><b>扩展：</b>访问本地邻接；远端微邻接加入异步 RDMA Read 队列，远端大邻接生成 <code>ComputeTask</code> 发送到目标机。</li>
+    <li><b>归并：</b><code>TaskManager</code> 从接收队列反序列化 task/result/sync，更新全局候选堆、局部任务和计数。</li>
+    <li><b>协作：</b><code>coro_sub_query_v5()</code> 在等待 CQ 或远端结果时让出执行权，运行时执行其他查询。</li>
+    <li><b>结束：</b>分布式终止成立后产出 <code>QueryMsg::result</code>；发起机与 ground truth 交集计数，计算 recall。</li>
+  </ol>
+  <h3 id="termination">5.4 状态机与终止检测</h3>
+  <pre>START → PRE_STAGE → POST_STAGE ⇄ PAUSE → END
+          顶层路由      分布式扩展      等消息/无本地工作</pre>
+  <p><code>QueryMsg</code> 同时保存 <code>post_cnt/recv_cnt</code>、核心/非核心同步计数，以及 <code>has_token</code>、<code>token_is_black</code>、<code>proc_is_black</code> 等字段。这是带颜色令牌的分布式终止思想：只有所有工作和在途消息都被确认，令牌完成一轮且保持白色，查询才可结束，避免“本地队列空”被误判为全局完成。</p>
+</section>
+
+<section id="storage">
+  <h2>6. 数据与索引格式</h2>
+  <h3>原始向量与查询</h3><pre>uint32_t count
+uint32_t dimension
+T vectors[count][dimension]     // T = int8_t / uint8_t / float</pre>
+  <p>ground truth 沿用 BIGANN/DiskANN 常见二进制格式，由 <code>AnnsParameter::load_query_gt()</code> 读取并转为每查询优先队列。</p>
+  <h3>ScalaGraph V3 索引文件（每分片）</h3><pre>uint32_t partition_id
+uint32_t partition_num
+uint32_t local_vec_num
+uint32_t local_ngh_ele_size
+uint64_t enter_point
+uint64_t remote_ngh_num
+byte     local_neighbor_area[local_vec_num * local_ngh_ele_size]
+uint32_t remote_neighbor_area[remote_ngh_num]</pre>
+  <h3>ScalaGraph V3 数据文件（每分片）</h3><pre>uint32_t partition_id
+uint32_t partition_num
+uint32_t partition_vec_num
+uint64_t all_vec_num
+byte     entry_vector[vec_size + sizeof(uint64_t)]
+byte     vectors[partition_vec_num][vec_size + sizeof(uint64_t)]</pre>
+  <p>节点经过按分片连续重排，因此 <code>cumu_partition_num[p]</code> 既能确定全局 ID 所属机器，也能用 <code>global_id - prefix[p]</code> 得到远端内部 ID。</p>
+  <h3>邻接编码</h3><p>ScalaGraph 旧/兼容路径将 32 位头拆成：最高位结束标记、12 位分片 ID、低 16 位度数。V3 则进一步固定本地邻接元素宽度，并把较大的远端邻接放进独立区域，通过偏移引用；<code>INLINE_DEG_BAR = 2</code> 的微邻接直接内联。</p>
+  <div class="callout warn"><b>ABI 注意：</b>文件与网络序列化大量直接 <code>memcpy</code> 原生整数、<code>size_t</code> 和结构字段，没有统一端序/版本号/schema。它默认同架构、同编译配置的集群。</div>
+</section>
+
+<section id="rdma">
+  <h2>7. RDMA 通信层</h2>
+  <h3>对象分工</h3>
+  <table><thead><tr><th>对象</th><th>职责</th></tr></thead><tbody>
+    <tr><td><code>RdmaContext</code></td><td>每线程持有 verbs context、PD、CQ、QP、MR、读写计数及远端 rkey/vaddr。</td></tr>
+    <tr><td><code>ServerConnect</code></td><td>连接 memcached，登记机器，交换 <code>ExchangeMeta</code>，建立路由并提供集群 barrier。</td></tr>
+    <tr><td><code>RdmaCommunication</code></td><td>面向上层提供 Read/Write/Send、buffer 管理、CQ polling、消息分类与构建同步。</td></tr>
+    <tr><td><code>VectorBuffer</code></td><td>异步 Read 的本地缓存槽及空闲/完成管理。</td></tr>
+    <tr><td><code>SendWriteBuffer / RecvWriteBuffer</code></td><td>RDMA Write 消息槽，接收侧按 <code>ControlType</code> 分发进不同逻辑队列。</td></tr>
+  </tbody></table>
+  <h3>三类操作为何并存</h3>
+  <ul><li><b>RDMA Read：</b>拉取已知地址的远端向量，远端 CPU 不参与，适合小而随机的访问。</li><li><b>RDMA Write：</b>推送序列化任务、结果、同步消息和构建期大块数据；控制字告知接收侧如何解释缓冲区。</li><li><b>Send/Recv：</b>用于握手或需要接收 WQE 语义的控制路径。</li></ul>
+  <p>每个工作线程都有独立 <code>RdmaContext</code>（通过 <code>PerThreadStorage</code>），降低锁竞争。<code>poll_send()</code>/<code>poll_recv()</code>/<code>poll_read()</code> 是推进异步状态的核心；上层协程必须持续调用它们，系统没有独立后台 progress thread。</p>
+  <div class="callout"><b>控制平面与数据平面：</b>memcached 只协调机器发现、QP/MR 元数据和 barrier；真正的向量、任务、候选和结果走 RDMA。</div>
+</section>
+
+<section id="runtime">
+  <h2>8. CoroMem 并行运行时</h2>
+  <p><code>SharedMem</code> 是进程级 RAII 入口，初始化 <code>ThreadPool</code>、barrier、终止检测和页分配器。线程池根据硬件拓扑记录 socket/NUMA/leader 关系。</p>
+  <table><thead><tr><th>抽象</th><th>用途</th></tr></thead><tbody>
+    <tr><td><code>PerThreadStorage&lt;T&gt;</code></td><td>给每线程一个 T；本线程 O(1) 获取，也能按线程 ID 访问远端槽。RDMA context、Profiler、TaskManager 都用它。</td></tr>
+    <tr><td><code>do_all</code></td><td>并行遍历固定 range。</td></tr>
+    <tr><td><code>do_all_standby</code></td><td>做完本地 range 后进入 standby 回调，继续推进网络和服务其他机器查询。</td></tr>
+    <tr><td><code>BalanceQueue</code> / worklists</td><td>线程间负载均衡与 work stealing。</td></tr>
+    <tr><td><code>Corobj&lt;T&gt;</code></td><td>C++20 coroutine 包装；RDMA 未完成时挂起当前查询，不阻塞 OS 线程。</td></tr>
+  </tbody></table>
+  <p>整体并发模型可概括为：<b>每核一个线程 + 每线程一个 RDMA 端点 + 每线程多个可挂起查询</b>。它用查询级并发覆盖网络延迟，并用 NUMA 本地资源减少共享热点。</p>
+</section>
+
+<section id="classes">
+  <h2>9. 关键类关系</h2>
+  <pre>IndexParameter ───────┬─→ GraphIndex ─┬─→ B1GraphInterface
+                     │               └─→ ScalaGraphIndex
+                     └─→ ScalaBuild ─────→ RdmaCommunication
+
+AnnsParameter ───────┐
+RdmaParameter ───────┼─→ ScalaSearch&lt;dist_t&gt; ─→ QueryMsg&lt;dist_t&gt;
+GraphIndex ──────────┘          │               ├→ candidate heaps / visited
+                               ├→ TaskManager   ├→ Corobj
+                               ├→ ScalaScheduler└→ Sync state
+                               └→ RdmaCommunication
+                                      ├→ PerThreadStorage&lt;RdmaContext&gt;
+                                      ├→ ServerConnect → memcached
+                                      └→ verbs QP/CQ/MR</pre>
+  <h3>最值得逐行读的对象</h3>
+  <ul><li><code>QueryMsg</code>：一个查询的完整分布式状态，理解它就理解了协议。</li><li><code>ScalaSearch</code>：算法与通信的汇合点；尤其关注 <code>scala_search_sub*</code>、<code>coro_sub_query_v5</code>、<code>scala_sub_proc_v5</code>。</li><li><code>ScalaGraphIndex</code>：把文件格式翻译为本地访问、远端 ID 和任务生成。</li><li><code>RdmaCommunication::poll_task_result</code>：网络消息如何进入上层状态机。</li></ul>
+</section>
+
+<section id="config">
+  <h2>10. 构建、参数与运行</h2>
+  <h3>依赖与当前构建假设</h3><p>Linux、GCC/C++20、OpenMP、Boost、libibverbs、librdmacm、libmemcached、Intel oneAPI MKL，另有 DiskANN 子模块。根 CMake 还包含作者机器上的绝对 GCC、RDMA include、MKL/iomp 路径，因此新环境通常不能直接复现。</p>
+  <h3>关键参数</h3>
+  <table><thead><tr><th>参数</th><th>含义</th><th>影响</th></tr></thead><tbody>
+    <tr><td><code>--graph_type</code></td><td><code>vamana/shared_nothing/Kshared_nothing/scalagraph_v3</code> 等</td><td>构建布局必须与查询模式匹配。</td></tr>
+    <tr><td><code>--app_type</code></td><td><code>single/b1/b2/b2kmeans/b2kmeansbatch/scala_v3</code></td><td>选择查询执行策略。</td></tr>
+    <tr><td><code>-R</code></td><td>图最大度</td><td>越大通常 recall 更高、内存/构建成本更高。</td></tr>
+    <tr><td><code>-L</code></td><td>构建搜索宽度</td><td>控制建图质量与耗时。</td></tr>
+    <tr><td><code>--res_knn</code></td><td>返回 k，默认 10</td><td>评测结果集大小。</td></tr>
+    <tr><td><code>-Q</code></td><td>查询数，默认 10000</td><td>必须不超过 query/GT 文件记录数。</td></tr>
+    <tr><td><code>-s</code></td><td>数据百万数</td><td>代码会检查它与文件头向量数一致。</td></tr>
+    <tr><td><code>-t</code></td><td>线程数</td><td>当前 <code>MAX_THREAD_NUM=16</code> 还限制元数据数组。</td></tr>
+  </tbody></table>
+  <h3>集群启动顺序</h3><ol><li>修改配置：首两行为 leader IP/port，随后是 <code>host=machine_id</code>；leader ID 必须为 0。</li><li>所有机器必须使用相同二进制、<code>MACHINE_NUM</code> 和索引路径约定。</li><li>清理/启动 memcached 后，在各机近同时执行同一构建脚本；构建完成后再执行匹配的查询脚本。</li><li>生产复现前先用小数据集，并确认 hugepage、RDMA device、GID/MTU、锁页内存限制。</li></ol>
+  <div class="callout warn"><b>README 与代码差异：</b>README 示例写 <code>dist_fn=ip</code>，查询解析器实际接受的是 <code>mips</code>；脚本与当前代码也可能来自不同实验版本。以参数解析器为准。</div>
+</section>
+
+<section id="risks">
+  <h2>11. 静态分析发现的风险与改进方向</h2>
+  <p>以下是学习和二次开发时优先关注的内容；它们不一定都会在作者的固定实验环境触发。</p>
+  <table><thead><tr><th>级别</th><th>位置/现象</th><th>影响与建议</th></tr></thead><tbody>
+    <tr><td><span class="tag pill-red">高</span></td><td>多处 <code>memset(ptr, 0, sizeof(ptr))</code>，例如 <code>scala_build.h</code> 中映射数组初始化。</td><td><code>sizeof(ptr)</code> 只有指针宽度，数组绝大部分未初始化。改为已分配字节数或 <code>std::vector(value)</code>。</td></tr>
+    <tr><td><span class="tag pill-red">高</span></td><td><code>ScalaSearch::clear()</code> 无条件释放 <code>data_level0_memory_</code>/<code>linkLists_</code>，而 Scala V3 分支未设置这些 B1 成员；同时图对象也可能拥有同一内存。</td><td>存在所有权不清、空/重复释放风险。改用明确所有权的 RAII，并按模式销毁。</td></tr>
+    <tr><td><span class="tag pill-red">高</span></td><td><code>ScalaGraphIndex</code> 中 <code>malloc(sizeof(uint32_t) * partition_num + 1)</code>。</td><td>运算优先级导致只多 1 字节，而代码写到 <code>[partition_num]</code>。应为 <code>sizeof(uint32_t) * (partition_num + 1)</code>。</td></tr>
+    <tr><td><span class="tag">中</span></td><td><code>get_machine_id()</code> 找不到时无 return；部分错误分支直接 <code>abort()</code>。</td><td>非法 ID 时为未定义行为；应返回 optional/错误码或抛出含上下文异常。</td></tr>
+    <tr><td><span class="tag">中</span></td><td>通信/文件协议使用裸 <code>memcpy</code>，缺少版本、长度上界、端序和校验。</td><td>异构节点或配置不一致会静默损坏。增加固定宽度 schema、magic/version/checksum 和边界验证。</td></tr>
+    <tr><td><span class="tag">中</span></td><td>大量裸 <code>malloc/free/new</code>；若构造中途异常，资源回收困难。</td><td>使用 <code>vector</code>、<code>unique_ptr</code>、MR/QP RAII wrapper，并明确“借用/拥有”。</td></tr>
+    <tr><td><span class="tag">中</span></td><td>CMake 硬编码编译器和作者机器依赖路径，<code>-w</code> 关闭全部警告。</td><td>妨碍复现且隐藏真实缺陷。使用 find_package/toolchain/cache variables，并开启 <code>-Wall -Wextra</code>。</td></tr>
+    <tr><td><span class="tag">中</span></td><td><code>MACHINE_NUM</code>、线程数、缓冲区数量均为编译期宏。</td><td>配置文件机器数必须精确匹配；建议运行期拓扑加上显式容量验证。</td></tr>
+    <tr><td><span class="tag">低</span></td><td><code>include/index/hnsw/hnsw.h</code> 为空；注释、枚举与 README 中有旧版本名称。</td><td>增加架构决策记录，删除失效分支或标记实验状态。</td></tr>
+  </tbody></table>
+  <h3>测试现状</h3><p><code>tests/</code> 多数是带 <code>main</code> 的实验/诊断程序，并非自动断言式单元测试；根 CMake 没有看到 <code>enable_testing()</code>/<code>add_test()</code> 主线。建议先补纯 CPU 的格式 round-trip、序列化边界、ID 映射、候选堆和终止状态机测试，再做多机 RDMA 集成测试。</p>
+</section>
+
+<section id="reading">
+  <h2>12. 推荐阅读路线</h2>
+  <ol>
+    <li><b>30 分钟全景：</b><code>README.md</code> → 两个主入口 → <code>GraphIndex</code> → 本文第 1～5 节。</li>
+    <li><b>理解单机 ANNS：</b><code>space_l2.h</code>/<code>space_ip.h</code> → <code>searchBaseLayerST()</code> → <code>localSearchKnn()</code>。</li>
+    <li><b>理解数据布局：</b><code>IndexParameter</code> 文件名字段 → <code>ScalaBuild::partition_checkpoint()</code> → <code>ScalaGraphIndex::load_index()</code>。</li>
+    <li><b>理解分布式查询：</b><code>QueryMsg</code> 字段 → <code>TaskManager</code> 序列化 → <code>poll_task_result()</code> → <code>coro_sub_query_v5()</code>。</li>
+    <li><b>理解 RDMA：</b><code>RdmaContext::alloc_ctx/create_cqs/qp_create/connect</code> → <code>com_*_init</code> → post/poll/release。</li>
+    <li><b>最后读构建细节：</b><code>disk_utils.cc</code>、<code>partition.cc</code>、<code>scala_build.cc</code>；这些文件长，先带着“它产生哪个文件”这个问题阅读。</li>
+  </ol>
+  <h3>调试建议</h3><ul><li>第一阶段只跑 <code>single</code>，验证数据、距离和 recall。</li><li>第二阶段用 2～4 机小数据，但需重新编译对应 <code>MACHINE_NUM</code>。</li><li>在每次序列化前后打印 <code>control type / qid / src / dst / bytes</code>，比从 CQ 错误倒查更高效。</li><li>用 ASan/UBSan 跑不触发 RDMA 的格式和算法测试；当前 <code>-Ofast -w</code> 不适合排错。</li><li>排查挂起时，分别记录本地工作数、在途 post/recv 数、token 颜色和每类接收队列长度。</li></ul>
+  <div class="callout good"><b>学习抓手：</b>始终追踪三样东西——“一个节点 ID 属于哪台机器”“一段指针由谁拥有”“一次异步请求由哪个计数/完成事件释放”。这三条贯穿几乎所有复杂代码。</div>
+</section>
+</main>
+</body>
+</html>
