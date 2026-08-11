@@ -170,15 +170,18 @@ int get_best_gid_index(RdmaContext *ctx, struct ibv_port_attr *attr, int port) {
 }
 
 int RdmaCommunication::set_up_connection(RdmaContext *ctx) {
-  union ibv_gid temp_gid;
+  union ibv_gid temp_gid{};
   struct ibv_port_attr attr;
 
   srand48(getpid() * time(NULL));
 
-  if (rdma_param.gid_index != -1) {
+  if (rdma_param.link_type == IBV_LINK_LAYER_ETHERNET) {
     if (ibv_query_port(ctx->context, rdma_param.ib_port, &attr)) return 0;
 
-    rdma_param.gid_index = get_best_gid_index(ctx, &attr, rdma_param.ib_port);
+    if (!rdma_param.gid_index_explicit) {
+      rdma_param.gid_index =
+          get_best_gid_index(ctx, &attr, rdma_param.ib_port);
+    }
     if (rdma_param.gid_index < 0) return -1;
     if (ibv_query_gid(
             ctx->context, rdma_param.ib_port, rdma_param.gid_index, &temp_gid))

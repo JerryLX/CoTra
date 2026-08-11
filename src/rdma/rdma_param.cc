@@ -9,6 +9,7 @@ RdmaParameter::RdmaParameter() {
   iters = DEF_ITERS;
   link_type = LINK_UNSPEC;
   gid_index = DEF_GID_INDEX;
+  gid_index_explicit = false;
   inline_size = DEF_INLINE;
   pkey_index = 0;
   ai_family = AF_INET;
@@ -41,6 +42,12 @@ int RdmaParameter::parser(commandLine &cmd) {
   auto ib_devname_str = cmd.getOptionValue("-d", "mlx4_0");
   ALLOCATE(ib_devname, char, (ib_devname_str.size() + 1));
   strcpy(ib_devname, ib_devname_str.c_str());
+
+  int configured_gid_index = cmd.getOptionIntValue("-x", DEF_GID_INDEX);
+  if (configured_gid_index >= 0) {
+    gid_index = configured_gid_index;
+    gid_index_explicit = true;
+  }
 
   machine_num = MACHINE_NUM;
   // machine_id = cmd.getOptionIntValue("-m", 0);

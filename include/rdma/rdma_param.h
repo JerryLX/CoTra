@@ -126,6 +126,7 @@ class RdmaParameter {
   int8_t link_type;
   enum ibv_transport_type transport_type;
   int gid_index;
+  bool gid_index_explicit;
   int inline_size;
   int out_reads;
   int pkey_index;
