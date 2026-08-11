@@ -431,7 +431,14 @@ int RdmaContext::modify_qp_to_rtr(
 
   attr->ah_attr.dlid = dest->lid;
   attr->ah_attr.sl = param->sl;
-  attr->ah_attr.is_global = 0;
+  if (param->link_type == IBV_LINK_LAYER_ETHERNET) {
+    attr->ah_attr.is_global = 1;
+    attr->ah_attr.grh.dgid = dest->gid;
+    attr->ah_attr.grh.sgid_index = my_dest->gid_index;
+    attr->ah_attr.grh.hop_limit = 1;
+  } else {
+    attr->ah_attr.is_global = 0;
+  }
 
   attr->path_mtu = param->curr_mtu;
   attr->dest_qp_num = dest->qpn;
@@ -475,9 +482,18 @@ int RdmaContext::connect(RdmaParameter *param) {
     memset(&attr, 0, sizeof attr);
 
     // printf("modify qp to rtr\n");
-    if (modify_qp_to_rtr(
-            qp[i], &attr, param, &remote_mr_msg[i], &local_mr_msg[i], i)) {
-      fprintf(stderr, "Failed to modify QP %d to RTR\n", qp[i]->qp_num);
+    int ret = modify_qp_to_rtr(
+        qp[i], &attr, param, &remote_mr_msg[i], &local_mr_msg[i], i);
+    if (ret) {
+      fprintf(
+          stderr,
+          "Failed to modify QP %d to RTR: ret=%d (%s), remote_machine=%d, "
+          "link_layer=%s, port=%u, gid_index=%d, remote_lid=%d, "
+          "remote_qpn=%d, mtu=%d\n",
+          qp[i]->qp_num, ret, strerror(ret), i,
+          link_layer_str(param->link_type), param->ib_port,
+          local_mr_msg[i].gid_index, remote_mr_msg[i].lid,
+          remote_mr_msg[i].qpn, param->curr_mtu);
       return FAILURE;
     }
 
